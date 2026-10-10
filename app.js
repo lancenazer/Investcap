@@ -620,5 +620,6 @@
   // Free Finnhub plan allows ~60 calls/min: poll every 30s while the market is open, every 5 min when closed.
   (function loop() { setTimeout(async () => { await poll(); loop(); }, isMarketOpen() ? 30000 : 300000); })();
   setInterval(loadNews, 300000);
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {}); // installable + offline shell (needs https or localhost)
   document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
 })();

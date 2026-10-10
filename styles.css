@@ -275,7 +275,7 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 @media (max-width: 760px) {
   .app { display: block; }
   .sidebar { display: none; }
-  .main { padding: 14px 16px calc(96px + env(safe-area-inset-bottom)); }
+  .main { padding: calc(14px + env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom)); }
   .market-status span:last-child { display: none; }
   .big { font-size: 34px; }
   .chart { height: 200px; }

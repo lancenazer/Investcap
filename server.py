@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """InvestCap dev server: serves the front end and proxies Finnhub so the API key stays server-side."""
+import ipaddress
 import json
+import mimetypes
 import os
 import re
 import sys
@@ -13,11 +15,18 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, quote, urlparse
 from urllib.request import Request, urlopen
 
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PORT = int(os.environ.get("PORT", "5173"))
+HOST = os.environ.get("HOST", "127.0.0.1")  # set HOST=0.0.0.0 to let your phone reach it on the same Wi-Fi
 FINNHUB = "https://finnhub.io/api/v1"
 # Only these files are ever served statically, so .env and the rest of the repo stay private.
-STATIC = {"/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/data.js": "data.js", "/styles.css": "styles.css"}
+STATIC = {
+    "/": "index.html", "/index.html": "index.html", "/app.js": "app.js", "/data.js": "data.js", "/styles.css": "styles.css",
+    "/manifest.webmanifest": "manifest.webmanifest", "/sw.js": "sw.js",
+    "/icons/icon-192.png": "icons/icon-192.png", "/icons/icon-512.png": "icons/icon-512.png",
+    "/icons/apple-touch-icon.png": "icons/apple-touch-icon.png", "/icons/icon.svg": "icons/icon.svg",
+}
 
 
 def load_env(path):
@@ -139,6 +148,12 @@ class Handler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
+        # Only answer devices on this computer or the local network, never the public internet.
+        try:
+            if not ipaddress.ip_address(self.client_address[0]).is_private:
+                return self.send_error(403)
+        except ValueError:
+            return self.send_error(403)
         url = urlparse(self.path)
         if url.path.startswith("/api/"):
             return self.api(url)
@@ -194,5 +209,5 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"InvestCap on http://127.0.0.1:{PORT}  ·  Finnhub key: {'loaded' if API_KEY else 'MISSING (set FINNHUB_API_KEY in .env)'}")
-    ThreadingHTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
+    print(f"InvestCap on http://{'127.0.0.1' if HOST == '127.0.0.1' else HOST}:{PORT}  ·  Finnhub key: {'loaded' if API_KEY else 'MISSING (set FINNHUB_API_KEY in .env)'}")
+    ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()
