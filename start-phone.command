@@ -3,7 +3,9 @@
 cd "$(dirname "$0")" || exit 1
 
 PORT="${PORT:-5173}"
-IP="$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null)"
+# Find this Mac's Wi-Fi/LAN address: the interface used for the default route, then common fallbacks.
+IFACE="$(route -n get default 2>/dev/null | awk '/interface:/{print $2}')"
+IP="$(ipconfig getifaddr "$IFACE" 2>/dev/null || ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null)"
 
 if ! command -v python3 >/dev/null 2>&1; then
   echo "Python 3 is required but was not found."
@@ -19,7 +21,11 @@ fi
 
 echo "InvestCap is starting. On your phone (same Wi-Fi), open:"
 echo
-echo "    http://${IP:-<your-mac-ip>}:$PORT"
+if [ -n "$IP" ]; then
+  echo "    http://$IP:$PORT"
+else
+  echo "    (could not detect your address - find it in System Settings > Wi-Fi > Details, then open http://ADDRESS:$PORT)"
+fi
 echo
 echo "Then Share -> Add to Home Screen (iPhone) or menu -> Install app (Android)."
 echo "Only devices on your home network can connect. Ctrl+C to stop."
