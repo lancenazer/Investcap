@@ -1,0 +1,15 @@
+# Secrets - never commit this file
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Dependencies / build
+node_modules/
+.next/
+dist/
+__pycache__/
